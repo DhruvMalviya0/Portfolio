@@ -1,0 +1,108 @@
+Here's your **Replit-ready prompt** to build Dhruv's solar system portfolio:
+
+---
+
+**🚀 Replit Prompt:**
+
+---
+
+> **Build a full portfolio website for Dhruv Malviya using a 3D interactive solar system made entirely of particles. Use Three.js, GSAP ScrollTrigger, and vanilla JavaScript. Single HTML file, no build tools, all via CDN.**
+>
+> ---
+>
+> **Setup**
+> - Single `index.html` file
+> - Import Three.js r128, GSAP 3, and ScrollTrigger via CDN (cdnjs or unpkg)
+> - Full viewport canvas behind all content
+> - Dark background `#02020a`
+>
+> ---
+>
+> **Particle System**
+> - All objects — sun, planets, orbits, stars — are built from `THREE.Points` with `THREE.BufferGeometry`
+> - Sun: 8,000 particles in a sphere formation at scene center, color `#EF9F27`, animated pulsing scale (Math.sin on clock)
+> - 7 planets: each is 2,000–3,000 particles in a sphere, orbiting the sun at different radii and speeds
+> - Orbit rings: 500 particles each arranged in a circle, color `#ffffff` at 0.08 opacity
+> - Background: 6,000 random star particles spread across a large sphere, color `#ffffff` at 0.4 opacity
+> - Total particle budget: under 150,000
+>
+> ---
+>
+> **Planet Definitions (add these as a JS array)**
+> ```js
+> const planets = [
+>   { name: "About",        color: 0x888780, radius: 64,  size: 10, speed: 0.0008, section: "about"        },
+>   { name: "Skills",       color: 0xEF9F27, radius: 104, size: 12, speed: 0.0006, section: "skills"       },
+>   { name: "Experience",   color: 0x1D9E75, radius: 148, size: 13, speed: 0.0005, section: "experience"   },
+>   { name: "Arcane",       color: 0xD85A30, radius: 192, size: 14, speed: 0.0004, section: "arcane"       },
+>   { name: "Ray Tracer",   color: 0x7F77DD, radius: 238, size: 15, speed: 0.0003, section: "raytracer"    },
+>   { name: "Achievements", color: 0xBA7517, radius: 280, size: 18, speed: 0.0002, section: "achievements" },
+>   { name: "Contact",      color: 0x378ADD, radius: 318, size: 13, speed: 0.0001, section: "contact"      }
+> ];
+> ```
+>
+> ---
+>
+> **Scroll Morphing**
+> - Page has 8 full-height scroll sections (1 hero + 7 planet sections) stacked vertically as invisible `div`s with `height: 100vh` each
+> - Use GSAP ScrollTrigger pinning the canvas to viewport
+> - On scroll into each section: camera tweens toward that planet using `gsap.to(camera.position, {...})`, 1.2s ease-in-out
+> - Planet's particles explode outward (`gsap.to` each particle position to a random offset) then reform into a flat grid shape representing the section content
+> - On scroll out: particles collapse back to sphere, camera pulls back to solar system overview
+> - Implement particle morph using lerp on `BufferGeometry` position attributes each frame, driven by a `morphProgress` uniform (0 → 1)
+>
+> ---
+>
+> **Section Content (shown as HTML overlays during morph)**
+>
+> Fade in a `div` overlay with `opacity: 0 → 1` during morph. Style: frosted glass (`backdrop-filter: blur(12px); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px`). Font: load `Outfit` and `DM Mono` from Google Fonts.
+>
+> **Hero (Sun):** Name `Dhruv Malviya` in 72px Outfit bold. Subtitle: `Full-Stack Developer · Graphics Engineer · CS Undergraduate`. GitHub + LinkedIn icon links.
+>
+> **About:** CS undergrad at Kalvium / MIT ADT University (2024–2028), B.Tech CSE. Specializes in full-stack and scalable architectures. Strong in C++ and JavaScript. Seeking internship.
+>
+> **Skills:** Animated pill tags grouped by category:
+> - Languages: JavaScript, C++, Python, SQL, GLSL
+> - Frontend: React.js, Tailwind CSS
+> - Backend: Node.js, Express.js
+> - Databases: MongoDB, MySQL
+> - Tools: Git, GitHub, Docker, Postman, Linux (Arch, Fedora)
+>
+> **Experience:** Kalvium Work Integration · Full-Stack Developer · Jan 2026–Present. Built Ledger app with MERN stack. Merged code into Kalvium community repo (S72 Catalyst program).
+>
+> **Arcane:** Property Search Portal · Aug–Oct 2025. Led 4-person team. React + Node.js + MongoDB. Mock govt DB integration (DORIS/CERSAI). Color-coded verification algorithm. **🏆 3rd place, 50+ teams, national 24-hour hackathon.**
+>
+> **Ray Tracer:** Solar System Ray Tracer · Jun 2025–Present. C++, OpenGL, GLM, custom GLSL shaders. Decoupled threading (physics + render). BVH collision optimization. Dynamic Phong shading.
+>
+> **Achievements:** 3rd place national hackathon · SIH 2025 core dev (AI rockfall prediction, Python) · IIT Bombay E-Summit startup MVP · Competitive programming · Linux power user.
+>
+> **Contact:** GitHub and LinkedIn links. CTA text: `Open to internships — Let's build something.`
+>
+> ---
+>
+> **Interactivity**
+> - Raycasting on mouse move: detect nearest planet, increase its particle size and brightness on hover
+> - Show planet name tooltip (absolute div) near cursor on hover
+> - Click planet → GSAP scrollTo that section
+> - Side nav: 8 small dots (`position: fixed; right: 24px`) that highlight based on active scroll section, click to jump
+> - Custom cursor: small white circle `12px`, replaces default cursor, follows mouse with `lerp` smoothing
+> - Star particles: subtle parallax on mouse move using `camera.position.x/y` offset at 0.02 factor
+>
+> ---
+>
+> **GLSL Shaders**
+> - Custom vertex shader: use `gl_PointSize` scaled by distance from camera and a `size` uniform
+> - Fragment shader: draw circular points (`discard` outside circle using `length(gl_PointCoord - 0.5)`) with soft edge falloff
+> - Add a `color` attribute per particle for per-planet color mixing
+>
+> ---
+>
+> **Performance**
+> - Use `THREE.Points` not meshes
+> - Reuse `BufferGeometry` and update positions in place
+> - Cap at 60fps with `renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))`
+> - Dispose geometry and materials on section exit if unused
+
+---
+
+This is structured exactly how Replit Agent expects it — stack, file structure, data, behavior, and content all in one prompt. Paste it directly and it'll scaffold the full thing. Want me to also write the actual starter `index.html` with the boilerplate wired up?

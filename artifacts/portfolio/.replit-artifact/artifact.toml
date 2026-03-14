@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Dhruv Malviya Portfolio"
+version = "1.0.0"
+id = "artifacts/portfolio"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 21113
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/portfolio run dev"
+
+[services.env]
+PORT = "21113"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/portfolio", "run", "build"]
+publicDir = "artifacts/portfolio/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

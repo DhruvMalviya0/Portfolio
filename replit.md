@@ -16,12 +16,24 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Artifacts
+
+### `artifacts/portfolio` — Dhruv Malviya Portfolio
+- React + Vite web app at `/`
+- 3D interactive solar system made of particles using Three.js
+- GSAP ScrollTrigger for scroll-based camera animation
+- Planet definitions with orbit rings, sun pulsing, star parallax
+- Custom cursor with lerp smoothing, hover tooltips, side nav dots
+- Graceful fallback to static HTML layout when WebGL unavailable
+- No backend — pure frontend
+
 ## Structure
 
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server
+│   └── portfolio/          # Dhruv Malviya portfolio (Three.js solar system)
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
