@@ -4,9 +4,9 @@
 
 ---
 
-## ✨ Live Demo
+## ✨ Live 
 
-> Deploy on Replit / GitHub Pages / Vercel — add your link here.
+https://dhruvmalviya.vercel.app/
 
 ---
 
@@ -147,15 +147,6 @@ GitHub · LinkedIn · Discord DM
 
 ---
 
-## 📬 Contact
-
-| Platform | Link |
-|----------|------|
-| GitHub | github.com/yourusername |
-| LinkedIn | linkedin.com/in/yourusername |
-| Discord | discord.com/users/YOURID |
-
----
 
 ## 📄 License
 
