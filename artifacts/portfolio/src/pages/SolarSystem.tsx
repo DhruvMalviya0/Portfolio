@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(ScrollToPlugin);
+gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
 
 const PLANETS = [
   { name: "About",        color: 0x888780, radius: 64,  size: 10, speed: 0.00045, section: "about"        },
@@ -293,13 +294,14 @@ function easeInOut(t: number): number {
 /* ── Static fallback ── */
 function StaticPortfolio() {
   return (
-    <div style={{ fontFamily: "'Outfit', sans-serif", color: "#fff" }}>
+    <div className="static-portfolio" style={{ fontFamily: "'Doto', sans-serif", color: "#fff", fontWeight: 600 }}>
       <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "2rem", background: "radial-gradient(ellipse at center, rgba(239,159,39,0.08) 0%, #02020a 70%)" }}>
-        <h1 style={{ fontSize: "clamp(2.5rem,6vw,4.5rem)", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em" }}>Dhruv Malviya</h1>
-        <p style={{ fontFamily: "'DM Mono',monospace", fontSize: "clamp(0.8rem,1.8vw,1.1rem)", color: "rgba(255,255,255,0.55)", letterSpacing: "0.08em", marginBottom: "2rem" }}>Full-Stack Developer · Graphics Engineer · CS Undergraduate</p>
+        <h1 style={{ fontSize: "88px", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em", color: "rgba(255,255,255,0.93)" }}>Dhruv Malviya</h1>
+        <p style={{ fontFamily: "'Doto', sans-serif", fontSize: "22px", color: "rgba(255,255,255,0.80)", letterSpacing: "0.08em", marginBottom: "2rem", fontWeight: 700 }}>Full-Stack Developer · Graphics Engineer · CS Undergraduate</p>
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
           <a href="https://github.com/DhruvMalviya0" target="_blank" rel="noopener noreferrer" className="hero-link">GitHub</a>
           <a href="https://linkedin.com/in/dhruv-malviya-8a2765294" target="_blank" rel="noopener noreferrer" className="hero-link">LinkedIn</a>
+          <a href="https://discord.com/users/884316563686166548" target="_blank" rel="noopener noreferrer" className="hero-link">Discord</a>
         </div>
       </section>
       {[
@@ -308,8 +310,8 @@ function StaticPortfolio() {
         { title: "Experience", color: "#1D9E75", content: <><h3 style={{ color: "#1D9E75" }}>Kalvium · Full-Stack Developer · Jan 2026–Present</h3><ul style={{ color: "rgba(255,255,255,0.8)", lineHeight: 2, paddingLeft: "1.25rem" }}><li>MERN stack Ledger application</li><li>Merged into Kalvium community repo (S72 Catalyst)</li></ul></> },
         { title: "Arcane", color: "#D85A30", content: <><p style={{ color: "rgba(255,255,255,0.6)" }}>Property Search Portal · Aug–Oct 2025</p><ul style={{ color: "rgba(255,255,255,0.8)", lineHeight: 2, paddingLeft: "1.25rem" }}><li>Led 4-person team · React + Node.js + MongoDB</li><li>DORIS/CERSAI mock integration · Verification algo</li></ul><div style={{ marginTop: "1rem", background: "rgba(239,159,39,0.1)", border: "1px solid rgba(239,159,39,0.3)", borderRadius: "8px", padding: "0.6rem 1rem", color: "#EF9F27", fontWeight: 600 }}>🏆 3rd place — 50+ teams, 24-hour hackathon</div></> },
         { title: "Ray Tracer", color: "#7F77DD", content: <ul style={{ color: "rgba(255,255,255,0.8)", lineHeight: 2, paddingLeft: "1.25rem" }}><li>C++ · OpenGL · GLM · GLSL shaders</li><li>Decoupled threading · BVH collision · Phong shading</li></ul> },
-        { title: "Achievements", color: "#BA7517", content: <ul style={{ listStyle: "none", padding: 0 }}>{[["🏆","3rd place — National hackathon"],["🤖","SIH 2025 — AI rockfall prediction"],["🚀","IIT Bombay E-Summit MVP"],["💻","Competitive programming"],["🐧","Linux power user"]].map(([icon,text]) => <li key={text as string} style={{ display: "flex", gap: "0.75rem", color: "rgba(255,255,255,0.8)", marginBottom: "0.75rem" }}><span>{icon}</span><span>{text}</span></li>)}</ul> },
-        { title: "Contact", color: "#378ADD", content: <div style={{ textAlign: "center" }}><p style={{ color: "rgba(255,255,255,0.6)", marginBottom: "2rem" }}>Open to internships — Let's build something.</p><div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}><a href="https://github.com/DhruvMalviya0" target="_blank" rel="noopener noreferrer" className="contact-btn">GitHub</a><a href="https://linkedin.com/in/dhruv-malviya-8a2765294" target="_blank" rel="noopener noreferrer" className="contact-btn">LinkedIn</a></div></div> },
+        { title: "Achievements", color: "#BA7517", content: <ul style={{ listStyle: "none", padding: 0 }}>{["3rd place — National hackathon","SIH 2025 — AI rockfall prediction","IIT Bombay E-Summit MVP","Competitive programming","Linux power user"].map((text) => <li key={text} style={{ color: "rgba(255,255,255,0.8)", marginBottom: "0.75rem" }}>{text}</li>)}</ul> },
+        { title: "Contact", color: "#378ADD", content: <div style={{ textAlign: "center" }}><p style={{ color: "rgba(255,255,255,0.6)", marginBottom: "2rem" }}>Open to internships — Let's build something.</p><div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}><a href="https://github.com/DhruvMalviya0" target="_blank" rel="noopener noreferrer" className="contact-btn">GitHub</a><a href="https://linkedin.com/in/dhruv-malviya-8a2765294" target="_blank" rel="noopener noreferrer" className="contact-btn">LinkedIn</a><a href="https://discord.com/users/884316563686166548" target="_blank" rel="noopener noreferrer" className="contact-btn">Discord</a></div></div> },
       ].map(s => (
         <section key={s.title} style={{ padding: "5rem 2rem", maxWidth: "800px", margin: "0 auto" }}>
           <h2 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "1.5rem", color: s.color }}>{s.title}</h2>
@@ -323,12 +325,37 @@ function StaticPortfolio() {
 /* ── Main component ── */
 export default function SolarSystem() {
   const canvasRef    = useRef<HTMLDivElement>(null);
+  const navWrapperRef = useRef<HTMLDivElement>(null);
+  const isOverNavUIRef = useRef(false);
   const cursorRef    = useRef<HTMLDivElement>(null);
   const cursorRingRef = useRef<HTMLDivElement>(null);
   const tooltipRef   = useRef<HTMLDivElement>(null);
   const overlayRef   = useRef<HTMLDivElement>(null);
-  const navDotsRef   = useRef<(HTMLButtonElement | null)[]>([]);
   const [webglError, setWebglError] = useState(false);
+  const [activeNavIndex, setActiveNavIndex] = useState(0);
+  const totalSections = PLANETS.length + 1;
+
+  const navigateSection = (direction: number) => {
+    const nextSection = Math.max(0, Math.min(totalSections - 1, activeNavIndex + direction));
+    gsap.to(window, {
+      scrollTo: nextSection * window.innerHeight,
+      duration: 1.2,
+      ease: "power2.inOut",
+    });
+    setActiveNavIndex(nextSection);
+  };
+
+  const isClickOnNavUI = (event: MouseEvent) => {
+    const navWrapper = navWrapperRef.current;
+    if (!navWrapper) return false;
+    const rect = navWrapper.getBoundingClientRect();
+    return (
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom
+    );
+  };
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -446,6 +473,12 @@ export default function SolarSystem() {
     let isOverPlanet = false;
 
     const onMouseMove = (e: MouseEvent) => {
+      if (isOverNavUIRef.current || isClickOnNavUI(e)) {
+        mouse.x = -10;
+        mouse.y = -10;
+        if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
+        return;
+      }
       cursorTargetX = e.clientX; cursorTargetY = e.clientY;
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -454,21 +487,13 @@ export default function SolarSystem() {
     };
     window.addEventListener("mousemove", onMouseMove);
 
-    const onClick = () => {
+    const onClick = (e: MouseEvent) => {
+      if (isOverNavUIRef.current || isClickOnNavUI(e)) return;
       if (hoveredPlanet >= 0) {
         gsap.to(window, { duration: 1.0, scrollTo: { y: (hoveredPlanet + 1) * window.innerHeight }, ease: "power2.inOut" });
       }
     };
     window.addEventListener("click", onClick);
-
-    // Nav dots
-    const updateNavDots = (idx: number) => {
-      navDotsRef.current.forEach((dot, i) => {
-        if (!dot) return;
-        dot.style.backgroundColor = i === idx ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)";
-        dot.style.transform = i === idx ? "scale(1.5)" : "scale(1)";
-      });
-    };
 
     // Overlay content
     let lastShownSection = -1;
@@ -494,6 +519,17 @@ export default function SolarSystem() {
     let scrollY = window.scrollY;
     const onScroll = () => { scrollY = window.scrollY; };
     window.addEventListener("scroll", onScroll, { passive: true });
+
+    const arrowsFadeTween = gsap.to(".arrows-wrapper", {
+      opacity: 0,
+      pointerEvents: "none",
+      scrollTrigger: {
+        trigger: "body",
+        start: "top top",
+        end: "10% top",
+        scrub: true,
+      },
+    });
 
     const N = PLANETS.length + 1; // total sections
 
@@ -637,7 +673,7 @@ export default function SolarSystem() {
       const displaySection = frac > 0.5 ? toIdx : fromIdx;
       if (displaySection !== currentDisplaySection) {
         currentDisplaySection = displaySection;
-        updateNavDots(displaySection);
+        setActiveNavIndex(displaySection);
       }
       updateOverlay(displaySection, frac > 0.55 || (frac <= 0.55 && displaySection > 0 && frac === 0));
       // Simpler: show overlay when settled at a planet section
@@ -745,6 +781,8 @@ export default function SolarSystem() {
       window.removeEventListener("click", onClick);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      arrowsFadeTween.scrollTrigger?.kill();
+      arrowsFadeTween.kill();
       renderer.dispose();
       if (canvasRef.current && renderer.domElement.parentNode === canvasRef.current) {
         canvasRef.current.removeChild(renderer.domElement);
@@ -755,16 +793,16 @@ export default function SolarSystem() {
   if (webglError) return <div style={{ background: "#02020a", minHeight: "100vh" }}><StaticPortfolio /></div>;
 
   return (
-    <div style={{ position: "relative", width: "100vw", background: "#02020a" }}>
+    <div style={{ position: "relative", width: "100vw", background: "#02020a", fontFamily: "'Doto', sans-serif", fontWeight: 600 }}>
       <div ref={canvasRef} style={{ position: "fixed", inset: 0, zIndex: 0 }} />
 
       {/* Scroll sections */}
       <div style={{ position: "relative", zIndex: 1 }}>
         <div id="hero" style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", textAlign: "center", pointerEvents: "none" }}>
-          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: "clamp(2.5rem, 6vw, 4.5rem)", fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", marginBottom: "0.75rem", textShadow: "0 0 80px rgba(239,159,39,0.25)" }}>
+          <h1 style={{ fontFamily: "'Doto', sans-serif", fontSize: "88px", fontWeight: 800, color: "rgba(255,255,255,0.93)", letterSpacing: "-0.02em", marginBottom: "0.75rem", textShadow: "0 0 80px rgba(239,159,39,0.25)" }}>
             Dhruv Malviya
           </h1>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: "clamp(0.75rem, 1.6vw, 1rem)", color: "rgba(255,255,255,0.5)", letterSpacing: "0.08em", marginBottom: "2rem" }}>
+          <p style={{ fontFamily: "'Doto', sans-serif", fontSize: "22px", color: "rgba(255,255,255,0.80)", letterSpacing: "0.08em", marginBottom: "2rem", fontWeight: 700 }}>
             Full-Stack Developer · Graphics Engineer · CS Undergraduate
           </p>
           <div style={{ display: "flex", gap: "1rem", pointerEvents: "auto" }}>
@@ -776,13 +814,17 @@ export default function SolarSystem() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               LinkedIn
             </a>
-          </div>
-          <div style={{ position: "absolute", bottom: "2.5rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.68rem", letterSpacing: "0.18em" }}>SCROLL</span>
-            <div style={{ width: "1px", height: "36px", background: "linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)" }} />
+            <a href="https://discord.com/users/884316563686166548" target="_blank" rel="noopener noreferrer" className="hero-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369A19.791 19.791 0 0016.394 3.1a13.153 13.153 0 00-.599 1.233 18.27 18.27 0 00-5.59 0A12.859 12.859 0 009.606 3.1a19.736 19.736 0 00-3.925 1.27C3.214 8.1 2.548 11.733 2.88 15.314a19.936 19.936 0 005.993 3.055 14.47 14.47 0 001.284-2.074 12.918 12.918 0 01-2.02-.984c.17-.123.337-.251.5-.384 3.89 1.83 8.106 1.83 11.95 0 .164.133.331.261.5.384-.643.377-1.32.706-2.02.984.37.73.8 1.423 1.284 2.074a19.917 19.917 0 005.996-3.055c.389-4.152-.665-7.753-2.877-10.945zM9.68 13.122c-1.17 0-2.13-1.08-2.13-2.405 0-1.326.942-2.406 2.13-2.406 1.197 0 2.147 1.09 2.13 2.406 0 1.326-.942 2.405-2.13 2.405zm4.64 0c-1.17 0-2.13-1.08-2.13-2.405 0-1.326.942-2.406 2.13-2.406 1.197 0 2.147 1.09 2.13 2.406 0 1.326-.933 2.405-2.13 2.405z"/></svg>
+              Discord
+            </a>
           </div>
         </div>
         {PLANETS.map(p => <div key={p.section} id={p.section} style={{ height: "100vh" }} />)}
+      </div>
+
+      <div className="arrows-wrapper">
+        <div className="hero-scroll-arrows"></div>
       </div>
 
       {/* Transparent overlay — no background or blur */}
@@ -798,18 +840,67 @@ export default function SolarSystem() {
       </div>
 
       {/* Nav dots */}
-      <nav style={{ position: "fixed", right: "22px", top: "50%", transform: "translateY(-50%)", zIndex: 20, display: "flex", flexDirection: "column", gap: "10px" }}>
-        {["hero", ...PLANETS.map(p => p.section)].map((s, i) => (
-          <button key={s} ref={el => { navDotsRef.current[i] = el; }}
-            title={i === 0 ? "Home" : PLANETS[i - 1].name}
-            onClick={() => gsap.to(window, { duration: 1.0, scrollTo: { y: i * window.innerHeight }, ease: "power2.inOut" })}
-            style={{ width: "7px", height: "7px", borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, backgroundColor: i === 0 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)", transform: i === 0 ? "scale(1.5)" : "scale(1)", transition: "all 0.3s ease" }}
-          />
-        ))}
-      </nav>
+      <div
+        ref={navWrapperRef}
+        className="nav-wrapper"
+        onMouseEnter={() => { isOverNavUIRef.current = true; }}
+        onMouseLeave={() => { isOverNavUIRef.current = false; }}
+      >
+        <div
+          className={`nav-arrow-up ${activeNavIndex === 0 ? "hidden" : ""}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateSection(-1);
+          }}
+          role="button"
+          aria-label="Previous section"
+          tabIndex={activeNavIndex === 0 ? -1 : 0}
+        >
+          <div className="arrow-container arrow-up">
+            <div className="arrow-head"></div>
+            <div className="arrow-shaft"></div>
+          </div>
+        </div>
+
+        <nav className="nav-dots-container">
+          {["hero", ...PLANETS.map(p => p.section)].map((s, i) => (
+            <button
+              key={s}
+              title={i === 0 ? "Home" : PLANETS[i - 1].name}
+              className={`nav-dot ${activeNavIndex === i ? "is-active" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                gsap.to(window, {
+                  scrollTo: i * window.innerHeight,
+                  duration: 1.2,
+                  ease: "power2.inOut",
+                });
+                setActiveNavIndex(i);
+              }}
+              aria-label={i === 0 ? "Home" : PLANETS[i - 1].name}
+            />
+          ))}
+        </nav>
+
+        <div
+          className={`nav-arrow-down ${activeNavIndex === totalSections - 1 ? "hidden" : ""}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateSection(1);
+          }}
+          role="button"
+          aria-label="Next section"
+          tabIndex={activeNavIndex === totalSections - 1 ? -1 : 0}
+        >
+          <div className="arrow-container arrow-down">
+            <div className="arrow-shaft"></div>
+            <div className="arrow-head"></div>
+          </div>
+        </div>
+      </div>
 
       {/* Tooltip */}
-      <div ref={tooltipRef} style={{ position: "fixed", zIndex: 30, opacity: 0, pointerEvents: "none", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "7px", padding: "4px 12px", color: "rgba(255,255,255,0.9)", fontFamily: "'DM Mono', monospace", fontSize: "0.78rem", letterSpacing: "0.05em", transition: "opacity 0.2s", whiteSpace: "nowrap" }} />
+      <div ref={tooltipRef} style={{ position: "fixed", zIndex: 30, opacity: 0, pointerEvents: "none", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "7px", padding: "4px 12px", color: "rgba(255,255,255,0.90)", fontFamily: "'Doto', sans-serif", fontSize: "14px", letterSpacing: "0.05em", fontWeight: 700, transition: "opacity 0.2s", whiteSpace: "nowrap" }} />
 
       {/* Cursor */}
       <div ref={cursorRef} style={{ position: "fixed", width: "6px", height: "6px", borderRadius: "50%", background: "#fff", pointerEvents: "none", zIndex: 9999, transform: "translate(-50%,-50%)" }} />
@@ -842,37 +933,38 @@ function getSectionHTML(idx: number): string {
     </div>`,
     `<div class="section-inner">
       <h2 style="font-size:1.9rem;font-weight:700;margin-bottom:0.5rem;color:#fff;text-shadow:0 0 30px rgba(29,158,117,0.5);">Experience</h2>
-      <div style="margin-bottom:0.5rem;"><span style="color:#1D9E75;font-weight:600;font-size:1.05rem;">Kalvium Work Integration</span><span style="color:rgba(255,255,255,0.4);margin-left:1rem;font-family:'DM Mono',monospace;font-size:0.78rem;">Full-Stack Developer · Jan 2026–Present</span></div>
+      <div style="margin-bottom:0.5rem;"><span style="color:#1D9E75;font-weight:700;font-size:1.05rem;">Kalvium Work Integration</span><span style="color:rgba(255,255,255,0.62);margin-left:1rem;font-family:'Doto',sans-serif;font-size:0.78rem;font-weight:700;">Full-Stack Developer · Jan 2026–Present</span></div>
       <ul style="color:rgba(255,255,255,0.85);line-height:2.1;padding-left:1.25rem;"><li>Built a Ledger application using the MERN stack</li><li>Merged code into Kalvium community repository</li><li>Contributor to the S72 Catalyst program</li></ul>
     </div>`,
     `<div class="section-inner">
       <h2 style="font-size:1.9rem;font-weight:700;margin-bottom:0.5rem;color:#fff;text-shadow:0 0 30px rgba(216,90,48,0.5);">Arcane</h2>
-      <p style="color:rgba(255,255,255,0.45);margin-bottom:1rem;font-family:'DM Mono',monospace;font-size:0.78rem;">Property Search Portal · Aug–Oct 2025</p>
+      <p style="color:rgba(255,255,255,0.62);margin-bottom:1rem;font-family:'Doto',sans-serif;font-size:0.78rem;font-weight:700;">Property Search Portal · Aug–Oct 2025</p>
       <ul style="color:rgba(255,255,255,0.85);line-height:2.1;padding-left:1.25rem;"><li>Led a team of 4 developers</li><li>React + Node.js + MongoDB stack</li><li>Mock govt DB integration (DORIS/CERSAI)</li><li>Color-coded property verification algorithm</li></ul>
       <div style="margin-top:1rem;padding:0.7rem 1rem;background:rgba(239,159,39,0.08);border:1px solid rgba(239,159,39,0.3);border-radius:8px;color:#EF9F27;font-weight:600;font-size:0.88rem;">🏆 3rd place — 50+ teams, national 24-hour hackathon</div>
     </div>`,
     `<div class="section-inner">
       <h2 style="font-size:1.9rem;font-weight:700;margin-bottom:0.5rem;color:#fff;text-shadow:0 0 30px rgba(127,119,221,0.5);">Solar System Ray Tracer</h2>
-      <p style="color:rgba(255,255,255,0.45);margin-bottom:1rem;font-family:'DM Mono',monospace;font-size:0.78rem;">Jun 2025–Present</p>
+      <p style="color:rgba(255,255,255,0.62);margin-bottom:1rem;font-family:'Doto',sans-serif;font-size:0.78rem;font-weight:700;">Jun 2025–Present</p>
       <ul style="color:rgba(255,255,255,0.85);line-height:2.1;padding-left:1.25rem;"><li>Built in C++ with OpenGL, GLM, and custom GLSL shaders</li><li>Decoupled threading for physics &amp; render pipelines</li><li>BVH collision detection optimization</li><li>Dynamic Phong shading model</li></ul>
       <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;"><span class="tag">C++</span><span class="tag">OpenGL</span><span class="tag">GLSL</span><span class="tag">GLM</span></div>
     </div>`,
     `<div class="section-inner">
       <h2 style="font-size:1.9rem;font-weight:700;margin-bottom:1.25rem;color:#fff;text-shadow:0 0 30px rgba(186,117,23,0.5);">Achievements</h2>
       <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:0.8rem;">
-        <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span>🏆</span><span style="color:rgba(255,255,255,0.85);">3rd place — National 24-hour hackathon (50+ teams)</span></li>
-        <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span>🤖</span><span style="color:rgba(255,255,255,0.85);">SIH 2025 core developer — AI rockfall prediction (Python)</span></li>
-        <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span>🚀</span><span style="color:rgba(255,255,255,0.85);">IIT Bombay E-Summit — Startup MVP presentation</span></li>
-        <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span>💻</span><span style="color:rgba(255,255,255,0.85);">Competitive programming enthusiast</span></li>
-        <li style="display:flex;align-items:flex-start;gap:0.75rem;"><span>🐧</span><span style="color:rgba(255,255,255,0.85);">Linux power user (Arch, Fedora)</span></li>
+        <li style="color:rgba(255,255,255,0.85);">3rd place — National 24-hour hackathon (50+ teams)</li>
+        <li style="color:rgba(255,255,255,0.85);">SIH 2025 core developer — AI rockfall prediction (Python)</li>
+        <li style="color:rgba(255,255,255,0.85);">IIT Bombay E-Summit — Startup MVP presentation</li>
+        <li style="color:rgba(255,255,255,0.85);">Competitive programming enthusiast</li>
+        <li style="color:rgba(255,255,255,0.85);">Linux power user (Arch, Fedora)</li>
       </ul>
     </div>`,
     `<div class="section-inner" style="text-align:center;">
       <h2 style="font-size:1.9rem;font-weight:700;margin-bottom:0.75rem;color:#fff;text-shadow:0 0 30px rgba(55,138,221,0.5);">Let's Connect</h2>
-      <p style="color:rgba(255,255,255,0.55);font-size:0.95rem;margin-bottom:2rem;font-family:'DM Mono',monospace;">Open to internships — Let's build something.</p>
+      <p style="color:rgba(255,255,255,0.72);font-size:0.95rem;margin-bottom:2rem;font-family:'Doto',sans-serif;font-weight:700;">Open to internships — Let's build something.</p>
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
         <a href="https://github.com/DhruvMalviya0" target="_blank" rel="noopener noreferrer" class="contact-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a>
         <a href="https://linkedin.com/in/dhruv-malviya-8a2765294" target="_blank" rel="noopener noreferrer" class="contact-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>LinkedIn</a>
+        <a href="https://discord.com/users/884316563686166548" target="_blank" rel="noopener noreferrer" class="contact-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369A19.791 19.791 0 0016.394 3.1a13.153 13.153 0 00-.599 1.233 18.27 18.27 0 00-5.59 0A12.859 12.859 0 009.606 3.1a19.736 19.736 0 00-3.925 1.27C3.214 8.1 2.548 11.733 2.88 15.314a19.936 19.936 0 005.993 3.055 14.47 14.47 0 001.284-2.074 12.918 12.918 0 01-2.02-.984c.17-.123.337-.251.5-.384 3.89 1.83 8.106 1.83 11.95 0 .164.133.331.261.5.384-.643.377-1.32.706-2.02.984.37.73.8 1.423 1.284 2.074a19.917 19.917 0 005.996-3.055c.389-4.152-.665-7.753-2.877-10.945zM9.68 13.122c-1.17 0-2.13-1.08-2.13-2.405 0-1.326.942-2.406 2.13-2.406 1.197 0 2.147 1.09 2.13 2.406 0 1.326-.942 2.405-2.13 2.405zm4.64 0c-1.17 0-2.13-1.08-2.13-2.405 0-1.326.942-2.406 2.13-2.406 1.197 0 2.147 1.09 2.13 2.406 0 1.326-.933 2.405-2.13 2.405z"/></svg>Discord</a>
       </div>
     </div>`,
   ];
