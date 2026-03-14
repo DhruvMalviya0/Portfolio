@@ -13,9 +13,17 @@
     "typescript": "~5.9.2"
   },
   "optionalDependencies": {
+    "@esbuild/linux-x64": "0.27.3",
     "@rollup/rollup-win32-x64-msvc": "^4.59.0",
     "@tailwindcss/oxide-win32-x64-msvc": "^4.2.1",
     "lightningcss-win32-x64-msvc": "^1.32.0"
+  },
+  "pnpm": {
+    "optionalDependenciesMeta": {
+      "@esbuild/linux-x64": {
+        "optional": true
+      }
+    }
   },
   "dependencies": {
     "cross-env": "^10.1.0"
