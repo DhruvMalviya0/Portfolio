@@ -166,8 +166,7 @@ function createParticleSphere(count: number, radius: number, color: number, size
 }
 
 /** Flat particle ring around a planet (for visual variety) */
-function createPlanetRing(innerR: number, outerR: number, color: number): THREE.Points {
-  const count = 800;
+function createPlanetRing(innerR: number, outerR: number, color: number, count = 800): THREE.Points {
   const geo = new THREE.BufferGeometry();
   const pos    = new Float32Array(count * 3);
   const aScale = new Float32Array(count);
@@ -187,8 +186,7 @@ function createPlanetRing(innerR: number, outerR: number, color: number): THREE.
   return new THREE.Points(geo, makeGlowMat(new THREE.Color(color), 0.7, 0.45));
 }
 
-function createOrbitRing(radius: number): THREE.Points {
-  const count = 600;
+function createOrbitRing(radius: number, count = 600): THREE.Points {
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(count * 3);
   const aScale = new Float32Array(count);
@@ -208,8 +206,7 @@ function createOrbitRing(radius: number): THREE.Points {
   return new THREE.Points(geo, mat);
 }
 
-function createStars(): THREE.Points {
-  const count = 12000;
+function createStars(count = 6000): THREE.Points {
   const geo = new THREE.BufferGeometry();
   const pos      = new Float32Array(count * 3);
   const aTwinkle = new Float32Array(count);
@@ -296,9 +293,9 @@ function StaticPortfolio() {
   return (
     <div className="static-portfolio" style={{ fontFamily: "'Doto', sans-serif", color: "#fff", fontWeight: 600 }}>
       <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "2rem", background: "radial-gradient(ellipse at center, rgba(239,159,39,0.08) 0%, #02020a 70%)" }}>
-        <h1 style={{ fontSize: "88px", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em", color: "rgba(255,255,255,0.93)" }}>Dhruv Malviya</h1>
-        <p style={{ fontFamily: "'Doto', sans-serif", fontSize: "22px", color: "rgba(255,255,255,0.80)", letterSpacing: "0.08em", marginBottom: "2rem", fontWeight: 700 }}>Full-Stack Developer · Graphics Engineer · CS Undergraduate</p>
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+        <h1 className="hero-name" style={{ fontSize: "88px", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.02em", color: "rgba(255,255,255,0.93)" }}>Dhruv Malviya</h1>
+        <p className="hero-subtitle" style={{ fontFamily: "'Doto', sans-serif", fontSize: "22px", color: "rgba(255,255,255,0.80)", letterSpacing: "0.08em", marginBottom: "2rem", fontWeight: 700 }}>Full-Stack Developer · Graphics Engineer · CS Undergraduate</p>
+        <div className="hero-links" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
           <a href="https://github.com/DhruvMalviya0" target="_blank" rel="noopener noreferrer" className="hero-link">GitHub</a>
           <a href="https://linkedin.com/in/dhruv-malviya-8a2765294" target="_blank" rel="noopener noreferrer" className="hero-link">LinkedIn</a>
           <a href="https://discord.com/users/884316563686166548" target="_blank" rel="noopener noreferrer" className="hero-link">Discord</a>
@@ -327,6 +324,7 @@ export default function SolarSystem() {
   const canvasRef    = useRef<HTMLDivElement>(null);
   const navWrapperRef = useRef<HTMLDivElement>(null);
   const isOverNavUIRef = useRef(false);
+  const hasSwipedRef = useRef(false);
   const cursorRef    = useRef<HTMLDivElement>(null);
   const cursorRingRef = useRef<HTMLDivElement>(null);
   const tooltipRef   = useRef<HTMLDivElement>(null);
@@ -360,6 +358,20 @@ export default function SolarSystem() {
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    const isMobile = window.innerWidth < 768;
+    const orbitScale = isMobile ? 0.6 : 1.0;
+    const sizeScale = isMobile ? 0.7 : 1.0;
+    const particleScale = isMobile ? 0.6 : 1.0;
+    const starCount = isMobile ? 3000 : 6000;
+    const orbitParticleCount = Math.max(240, Math.floor(600 * particleScale));
+    const ringParticleCount = Math.max(320, Math.floor(800 * particleScale));
+
+    const scenePlanets = PLANETS.map((planet) => ({
+      ...planet,
+      radius: planet.radius * orbitScale,
+      size: planet.size * sizeScale,
+    }));
+
     // Renderer
     let renderer: THREE.WebGLRenderer;
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, failIfMajorPerformanceCaveat: false }); }
@@ -369,20 +381,21 @@ export default function SolarSystem() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x02020a);
     canvasRef.current.appendChild(renderer.domElement);
+    const canvasEl = renderer.domElement;
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x02020a, 0.0004);
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 120, 420);
+    camera.position.set(0, 120, isMobile ? 520 : 380);
 
     // Camera lerp state
-    const camPos = new THREE.Vector3(0, 120, 420);
+    const camPos = new THREE.Vector3(0, 120, isMobile ? 520 : 380);
     const camTarget = new THREE.Vector3(0, 0, 0);
-    const prevCamPos = new THREE.Vector3(0, 120, 420);
+    const prevCamPos = new THREE.Vector3(0, 120, isMobile ? 520 : 380);
 
     // Sun (Group of two particle layers)
-    const sun = createParticleSphere(9000, 22, 0xEF9F27, 2.4);
-    const sunHalo = createParticleSphere(3500, 26, 0xFFC44D, 1.1);
+    const sun = createParticleSphere(Math.floor(9000 * particleScale), 22, 0xEF9F27, 2.4);
+    const sunHalo = createParticleSphere(Math.floor(3500 * particleScale), 26, 0xFFC44D, 1.1);
     // Dim the halo atmosphere layer
     sunHalo.children.forEach(c => {
       const pts = c as THREE.Points;
@@ -391,24 +404,24 @@ export default function SolarSystem() {
     scene.add(sun); scene.add(sunHalo);
 
     // Stars
-    const stars = createStars();
+    const stars = createStars(starCount);
     scene.add(stars);
 
     // Planets & orbits
     const planetGroups: THREE.Group[] = [];
-    const planetAngles = PLANETS.map(() => Math.random() * Math.PI * 2);
-    PLANETS.forEach((p, pi) => {
-      scene.add(createOrbitRing(p.radius));
-      const grp = createParticleSphere(3200, p.size, p.color, 2.0);
+    const planetAngles = scenePlanets.map(() => Math.random() * Math.PI * 2);
+    scenePlanets.forEach((p, pi) => {
+      scene.add(createOrbitRing(p.radius, orbitParticleCount));
+      const grp = createParticleSphere(Math.floor(3200 * particleScale), p.size, p.color, 2.0);
       grp.position.set(p.radius * Math.cos(planetAngles[pi]), 0, p.radius * Math.sin(planetAngles[pi]));
       scene.add(grp);
       planetGroups.push(grp);
     });
     // Add rings to two planets for visual variety
-    const ring1 = createPlanetRing(PLANETS[4].size * 1.5, PLANETS[4].size * 2.8, PLANETS[4].color);
+    const ring1 = createPlanetRing(scenePlanets[4].size * 1.5, scenePlanets[4].size * 2.8, scenePlanets[4].color, ringParticleCount);
     ring1.rotation.x = Math.PI * 0.25;
     planetGroups[4].add(ring1);
-    const ring2 = createPlanetRing(PLANETS[5].size * 1.4, PLANETS[5].size * 2.5, PLANETS[5].color);
+    const ring2 = createPlanetRing(scenePlanets[5].size * 1.4, scenePlanets[5].size * 2.5, scenePlanets[5].color, ringParticleCount);
     ring2.rotation.x = Math.PI * 0.18;
     planetGroups[5].add(ring2);
 
@@ -495,6 +508,81 @@ export default function SolarSystem() {
     };
     window.addEventListener("click", onClick);
 
+    const handlePlanetClick = () => {
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+      let targetIndex = -1;
+      let minDist = Infinity;
+      planetGroups.forEach((grp, index) => {
+        const distance = raycaster.ray.distanceToPoint(grp.position);
+        if (distance < scenePlanets[index].size * 1.85 && distance < minDist) {
+          minDist = distance;
+          targetIndex = index;
+        }
+      });
+      if (targetIndex >= 0) {
+        gsap.to(window, {
+          duration: 1.0,
+          scrollTo: { y: (targetIndex + 1) * window.innerHeight },
+          ease: "power2.inOut",
+        });
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (isOverNavUIRef.current) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+      handlePlanetClick();
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (isOverNavUIRef.current) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+    };
+
+    canvasEl.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvasEl.addEventListener("touchmove", onTouchMove, { passive: false });
+
+    let touchStartY = 0;
+    const onDocTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    const onDocTouchEnd = (e: TouchEvent) => {
+      if (!isMobile) return;
+      const delta = touchStartY - e.changedTouches[0].clientY;
+      const absDelta = Math.abs(delta);
+
+      if (!hasSwipedRef.current && absDelta > 20) {
+        hasSwipedRef.current = true;
+        const hint = document.querySelector(".swipe-hint") as HTMLDivElement | null;
+        if (hint) {
+          hint.style.opacity = "0";
+          window.setTimeout(() => {
+            hint.style.display = "none";
+          }, 500);
+        }
+      }
+
+      if (absDelta <= 50) return;
+
+      const currentSection = Math.round(scrollY / window.innerHeight);
+      const nextSection = Math.max(0, Math.min(totalSections - 1, currentSection + (delta > 0 ? 1 : -1)));
+      gsap.to(window, {
+        scrollTo: nextSection * window.innerHeight,
+        duration: 1.2,
+        ease: "power2.inOut",
+      });
+      setActiveNavIndex(nextSection);
+    };
+    document.addEventListener("touchstart", onDocTouchStart, { passive: true });
+    document.addEventListener("touchend", onDocTouchEnd, { passive: true });
+
     // Overlay content
     let lastShownSection = -1;
     const updateOverlay = (sectionIdx: number, show: boolean) => {
@@ -531,7 +619,7 @@ export default function SolarSystem() {
       },
     });
 
-    const N = PLANETS.length + 1; // total sections
+    const N = scenePlanets.length + 1; // total sections
 
     // Animation loop
     const clock = new THREE.Clock();
@@ -555,7 +643,7 @@ export default function SolarSystem() {
       sunHalo.children.forEach(c => { ((c as THREE.Points).material as THREE.ShaderMaterial).uniforms.uTime.value = t; });
 
       // Planets orbit — groups have position & rotation directly
-      PLANETS.forEach((p, i) => {
+      scenePlanets.forEach((p, i) => {
         planetAngles[i] += p.speed;
         planetGroups[i].position.x = p.radius * Math.cos(planetAngles[i]);
         planetGroups[i].position.z = p.radius * Math.sin(planetAngles[i]);
@@ -580,8 +668,8 @@ export default function SolarSystem() {
 
       // Build camera position for current and next
       const getSection = (idx: number) => {
-        if (idx === 0) return { pos: new THREE.Vector3(0, 120, 420), target: new THREE.Vector3(0, 0, 0) };
-        const pd = PLANETS[idx - 1];
+        if (idx === 0) return { pos: new THREE.Vector3(0, 120, isMobile ? 520 : 380), target: new THREE.Vector3(0, 0, 0) };
+        const pd = scenePlanets[idx - 1];
         const mesh = planetGroups[idx - 1];
         return {
           pos: new THREE.Vector3(mesh.position.x * 0.55, mesh.position.y + 20, mesh.position.z + pd.size * 5.5),
@@ -706,7 +794,7 @@ export default function SolarSystem() {
       let found = -1, minDist = Infinity;
       planetGroups.forEach((grp, i) => {
         const dist = raycaster.ray.distanceToPoint(grp.position);
-        if (dist < PLANETS[i].size * 1.85 && dist < minDist) { minDist = dist; found = i; }
+        if (dist < scenePlanets[i].size * 1.85 && dist < minDist) { minDist = dist; found = i; }
       });
       if (found !== hoveredPlanet) {
         if (hoveredPlanet >= 0) {
@@ -720,7 +808,7 @@ export default function SolarSystem() {
           const surfMat = (planetGroups[found].children[0] as THREE.Points).material as THREE.ShaderMaterial;
           gsap.to(surfMat.uniforms.uSize, { value: 3.4, duration: 0.3 });
           gsap.to(surfMat.uniforms.uOpacity, { value: 1.0, duration: 0.3 });
-          if (tooltipRef.current) { tooltipRef.current.textContent = PLANETS[found].name; tooltipRef.current.style.opacity = "1"; }
+          if (tooltipRef.current) { tooltipRef.current.textContent = scenePlanets[found].name; tooltipRef.current.style.opacity = "1"; }
         } else {
           if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
         }
@@ -744,7 +832,7 @@ export default function SolarSystem() {
         const nDotRay = planeNorm.dot(ray.ray.direction);
         const mw = new THREE.Vector3();
         if (Math.abs(nDotRay) > 0.0001) { const tRay = -nd / nDotRay; ray.ray.at(Math.max(0, tRay), mw); }
-        const pr = PLANETS[hoveredPlanet].size * 3.5;
+        const pr = scenePlanets[hoveredPlanet].size * 3.5;
         for (let i = 0; i < arr.length; i += 3) {
           const wx = grp.position.x + arr[i], wy = grp.position.y + arr[i+1], wz = grp.position.z + arr[i+2];
           const dx = wx - mw.x, dy = wy - mw.y, dz = wz - mw.z;
@@ -779,6 +867,10 @@ export default function SolarSystem() {
       cancelAnimationFrame(animId);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("click", onClick);
+      canvasEl.removeEventListener("touchstart", onTouchStart);
+      canvasEl.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchstart", onDocTouchStart);
+      document.removeEventListener("touchend", onDocTouchEnd);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       arrowsFadeTween.scrollTrigger?.kill();
@@ -799,13 +891,13 @@ export default function SolarSystem() {
       {/* Scroll sections */}
       <div style={{ position: "relative", zIndex: 1 }}>
         <div id="hero" style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", textAlign: "center", pointerEvents: "none" }}>
-          <h1 style={{ fontFamily: "'Doto', sans-serif", fontSize: "88px", fontWeight: 800, color: "rgba(255,255,255,0.93)", letterSpacing: "-0.02em", marginBottom: "0.75rem", textShadow: "0 0 80px rgba(239,159,39,0.25)" }}>
+          <h1 className="hero-name" style={{ fontFamily: "'Doto', sans-serif", fontSize: "88px", fontWeight: 800, color: "rgba(255,255,255,0.93)", letterSpacing: "-0.02em", marginBottom: "0.75rem", textShadow: "0 0 80px rgba(239,159,39,0.25)" }}>
             Dhruv Malviya
           </h1>
-          <p style={{ fontFamily: "'Doto', sans-serif", fontSize: "22px", color: "rgba(255,255,255,0.80)", letterSpacing: "0.08em", marginBottom: "2rem", fontWeight: 700 }}>
+          <p className="hero-subtitle" style={{ fontFamily: "'Doto', sans-serif", fontSize: "22px", color: "rgba(255,255,255,0.80)", letterSpacing: "0.08em", marginBottom: "2rem", fontWeight: 700 }}>
             Full-Stack Developer · Graphics Engineer · CS Undergraduate
           </p>
-          <div style={{ display: "flex", gap: "1rem", pointerEvents: "auto" }}>
+          <div className="hero-links" style={{ display: "flex", gap: "1rem", pointerEvents: "auto" }}>
             <a href="https://github.com/DhruvMalviya0" target="_blank" rel="noopener noreferrer" className="hero-link">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
               GitHub
@@ -827,8 +919,10 @@ export default function SolarSystem() {
         <div className="hero-scroll-arrows"></div>
       </div>
 
+      <div className="swipe-hint">Swipe to explore</div>
+
       {/* Transparent overlay — no background or blur */}
-      <div ref={overlayRef} style={{
+      <div ref={overlayRef} className="section-overlay" style={{
         position: "fixed", top: "50%", left: "50%",
         transform: "translate(-50%, -50%)",
         zIndex: 10, opacity: 0, pointerEvents: "none",
