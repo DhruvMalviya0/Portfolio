@@ -319,6 +319,15 @@ function StaticPortfolio() {
   );
 }
 
+const isTouchDevice = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return (
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    window.matchMedia("(pointer: coarse)").matches
+  );
+};
+
 /* ── Main component ── */
 export default function SolarSystem() {
   const canvasRef    = useRef<HTMLDivElement>(null);
@@ -331,6 +340,7 @@ export default function SolarSystem() {
   const overlayRef   = useRef<HTMLDivElement>(null);
   const [webglError, setWebglError] = useState(false);
   const [activeNavIndex, setActiveNavIndex] = useState(0);
+  const isTouch = isTouchDevice();
   const totalSections = PLANETS.length + 1;
 
   const navigateSection = (direction: number) => {
@@ -359,6 +369,8 @@ export default function SolarSystem() {
     if (!canvasRef.current) return;
 
     const isMobile = window.innerWidth < 768;
+    const touchDevice = isTouchDevice();
+    document.body.style.cursor = touchDevice ? "auto" : "none";
     const orbitScale = isMobile ? 0.6 : 1.0;
     const sizeScale = isMobile ? 0.7 : 1.0;
     const particleScale = isMobile ? 0.6 : 1.0;
@@ -498,7 +510,9 @@ export default function SolarSystem() {
       stars.position.x += (mouse.x * 18 - stars.position.x) * 0.04;
       stars.position.y += (mouse.y * 12 - stars.position.y) * 0.04;
     };
-    window.addEventListener("mousemove", onMouseMove);
+    if (!touchDevice) {
+      window.addEventListener("mousemove", onMouseMove);
+    }
 
     const onClick = (e: MouseEvent) => {
       if (isOverNavUIRef.current || isClickOnNavUI(e)) return;
@@ -529,6 +543,17 @@ export default function SolarSystem() {
       }
     };
 
+    const hideSwipeHint = () => {
+      if (!isMobile || hasSwipedRef.current) return;
+      hasSwipedRef.current = true;
+      const hint = document.querySelector(".swipe-hint") as HTMLDivElement | null;
+      if (!hint) return;
+      hint.style.opacity = "0";
+      window.setTimeout(() => {
+        hint.style.display = "none";
+      }, 500);
+    };
+
     const onTouchStart = (e: TouchEvent) => {
       if (isOverNavUIRef.current) return;
       e.preventDefault();
@@ -544,30 +569,30 @@ export default function SolarSystem() {
       const touch = e.touches[0];
       mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+      hideSwipeHint();
     };
 
     canvasEl.addEventListener("touchstart", onTouchStart, { passive: false });
     canvasEl.addEventListener("touchmove", onTouchMove, { passive: false });
 
     let touchStartY = 0;
+    let touchStartX = 0;
     const onDocTouchStart = (e: TouchEvent) => {
       touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+    };
+    const onDocTouchMove = (e: TouchEvent) => {
+      if (!isMobile || hasSwipedRef.current) return;
+      const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+      const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+      if (deltaX > 8 || deltaY > 8) hideSwipeHint();
     };
     const onDocTouchEnd = (e: TouchEvent) => {
       if (!isMobile) return;
       const delta = touchStartY - e.changedTouches[0].clientY;
       const absDelta = Math.abs(delta);
 
-      if (!hasSwipedRef.current && absDelta > 20) {
-        hasSwipedRef.current = true;
-        const hint = document.querySelector(".swipe-hint") as HTMLDivElement | null;
-        if (hint) {
-          hint.style.opacity = "0";
-          window.setTimeout(() => {
-            hint.style.display = "none";
-          }, 500);
-        }
-      }
+      if (absDelta > 20) hideSwipeHint();
 
       if (absDelta <= 50) return;
 
@@ -581,6 +606,7 @@ export default function SolarSystem() {
       setActiveNavIndex(nextSection);
     };
     document.addEventListener("touchstart", onDocTouchStart, { passive: true });
+    document.addEventListener("touchmove", onDocTouchMove, { passive: true });
     document.addEventListener("touchend", onDocTouchEnd, { passive: true });
 
     // Overlay content
@@ -625,6 +651,33 @@ export default function SolarSystem() {
     const clock = new THREE.Clock();
     let animId: number;
     let currentDisplaySection = 0;
+
+    let cursorAnimFrame: number | undefined;
+    const animateCursor = () => {
+      cursorX += (cursorTargetX - cursorX) * 0.14;
+      cursorY += (cursorTargetY - cursorY) * 0.14;
+
+      if (cursorRef.current) {
+        cursorRef.current.style.left = cursorX + "px";
+        cursorRef.current.style.top = cursorY + "px";
+      }
+
+      if (cursorRingRef.current) {
+        const rx = cursorX + (cursorTargetX - cursorX) * 0.5;
+        const ry = cursorY + (cursorTargetY - cursorY) * 0.5;
+        cursorRingRef.current.style.left = rx + "px";
+        cursorRingRef.current.style.top = ry + "px";
+        cursorRingRef.current.style.transform = isOverPlanet
+          ? "translate(-50%,-50%) scale(2.5)"
+          : "translate(-50%,-50%) scale(1)";
+      }
+
+      cursorAnimFrame = requestAnimationFrame(animateCursor);
+    };
+
+    if (!touchDevice) {
+      animateCursor();
+    }
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -777,17 +830,6 @@ export default function SolarSystem() {
         }
       }
 
-      // ── Cursor ──
-      cursorX += (cursorTargetX - cursorX) * 0.14;
-      cursorY += (cursorTargetY - cursorY) * 0.14;
-      if (cursorRef.current) { cursorRef.current.style.left = cursorX + "px"; cursorRef.current.style.top = cursorY + "px"; }
-      if (cursorRingRef.current) {
-        const rx = cursorX + (cursorTargetX - cursorX) * 0.5;
-        const ry = cursorY + (cursorTargetY - cursorY) * 0.5;
-        cursorRingRef.current.style.left = rx + "px"; cursorRingRef.current.style.top = ry + "px";
-        cursorRingRef.current.style.transform = isOverPlanet ? "translate(-50%,-50%) scale(2.5)" : "translate(-50%,-50%) scale(1)";
-      }
-
       // ── Planet hover raycasting (using group world positions) ──
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, camera);
@@ -865,11 +907,14 @@ export default function SolarSystem() {
 
     return () => {
       cancelAnimationFrame(animId);
+      if (cursorAnimFrame !== undefined) cancelAnimationFrame(cursorAnimFrame);
+      document.body.style.cursor = "auto";
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("click", onClick);
       canvasEl.removeEventListener("touchstart", onTouchStart);
       canvasEl.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("touchstart", onDocTouchStart);
+      document.removeEventListener("touchmove", onDocTouchMove);
       document.removeEventListener("touchend", onDocTouchEnd);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
@@ -997,8 +1042,12 @@ export default function SolarSystem() {
       <div ref={tooltipRef} style={{ position: "fixed", zIndex: 30, opacity: 0, pointerEvents: "none", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "7px", padding: "4px 12px", color: "rgba(255,255,255,0.90)", fontFamily: "'Doto', sans-serif", fontSize: "14px", letterSpacing: "0.05em", fontWeight: 700, transition: "opacity 0.2s", whiteSpace: "nowrap" }} />
 
       {/* Cursor */}
-      <div ref={cursorRef} style={{ position: "fixed", width: "6px", height: "6px", borderRadius: "50%", background: "#fff", pointerEvents: "none", zIndex: 9999, transform: "translate(-50%,-50%)" }} />
-      <div ref={cursorRingRef} style={{ position: "fixed", width: "28px", height: "28px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", pointerEvents: "none", zIndex: 9998, transform: "translate(-50%,-50%)", transition: "transform 0.25s ease" }} />
+      {!isTouch && (
+        <>
+          <div ref={cursorRef} className="custom-cursor cursor-dot" style={{ position: "fixed", width: "6px", height: "6px", borderRadius: "50%", background: "#fff", pointerEvents: "none", zIndex: 9999, transform: "translate(-50%,-50%)" }} />
+          <div ref={cursorRingRef} className="custom-cursor cursor-glow" style={{ position: "fixed", width: "28px", height: "28px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.4)", pointerEvents: "none", zIndex: 9998, transform: "translate(-50%,-50%)", transition: "transform 0.25s ease" }} />
+        </>
+      )}
     </div>
   );
 }

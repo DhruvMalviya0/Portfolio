@@ -161,15 +161,15 @@ canvas {
 .hero-scroll-arrows:after {
   content: '';
   position: absolute;
-
-.swipe-hint {
-  display: none;
-}
   width: 100%;
   height: 100%;
   border-left: 8.001px solid rgba(255, 255, 255, 0);
   border-bottom: 8.001px solid rgba(255, 255, 255, 0);
   animation: heroArrows 3s linear infinite;
+}
+
+.swipe-hint {
+  display: none;
 }
 
 .hero-scroll-arrows:before {
@@ -497,5 +497,20 @@ canvas {
   .arrow-shaft {
     width: 3px;
     height: 28px;
+  }
+}
+
+@media (pointer: coarse) {
+  .custom-cursor,
+  .cursor-dot,
+  .cursor-trail,
+  .cursor-glow {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  * {
+    cursor: auto !important;
   }
 }
