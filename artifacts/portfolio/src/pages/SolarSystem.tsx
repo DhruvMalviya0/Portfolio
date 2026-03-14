@@ -546,7 +546,7 @@ export default function SolarSystem() {
       const getSection = (idx: number) => {
         if (idx === 0) return { pos: new THREE.Vector3(0, 120, 420), target: new THREE.Vector3(0, 0, 0) };
         const pd = PLANETS[idx - 1];
-        const mesh = planetMeshes[idx - 1];
+        const mesh = planetGroups[idx - 1];
         return {
           pos: new THREE.Vector3(mesh.position.x * 0.55, mesh.position.y + 20, mesh.position.z + pd.size * 5.5),
           target: mesh.position.clone(),
