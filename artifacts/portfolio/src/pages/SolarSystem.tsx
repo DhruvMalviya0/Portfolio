@@ -43,21 +43,33 @@ const PLANET_FRAG = `
 `;
 const STAR_VERT = `
   uniform float uTime;
+  uniform float uWarpIntensity;
   attribute float aTwinkle;
+  attribute float aFlare;
+  attribute float aSize;
   void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    float t = 1.0 + sin(uTime * 1.8 + aTwinkle * 6.28) * 0.35;
-    gl_PointSize = 2.2 * t * (300.0 / -mvPosition.z);
+    float twinkle = 1.0 + sin(uTime * 1.8 + aTwinkle * 6.28) * 0.38;
+    // Each star flares by its own random amount — some stay dim, some burst bright
+    float flare = 1.0 + aFlare * uWarpIntensity * 4.2;
+    gl_PointSize = aSize * twinkle * flare * (320.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 const STAR_FRAG = `
+  uniform float uWarpIntensity;
   void main() {
     vec2 uv = gl_PointCoord - 0.5;
     float d = length(uv);
     if (d > 0.5) discard;
+    float core = 1.0 - smoothstep(0.0, 0.18, d);
     float glow = 1.0 - smoothstep(0.0, 0.5, d);
-    gl_FragColor = vec4(1.0, 1.0, 1.0, glow * 0.8);
+    // Base brightness stays subtle; scroll flare adds a soft bloom, never overpowers
+    float alpha = core * 0.95 + glow * (0.35 + uWarpIntensity * 0.25);
+    alpha = min(alpha, 0.96);
+    // Slight warm tint on flared stars
+    vec3 col = mix(vec3(1.0), vec3(1.0, 0.97, 0.88), uWarpIntensity * 0.4);
+    gl_FragColor = vec4(col, alpha);
   }
 `;
 // Warp trail lines (speed streaks during camera travel)
@@ -84,25 +96,94 @@ function makeGlowMat(color: THREE.Color, size: number, opacity = 0.95) {
   });
 }
 
-function createParticleSphere(count: number, radius: number, color: number, size = 1.8): THREE.Points {
+/**
+ * Creates a planet-like particle sphere:
+ * - Oblate spheroid (wider at equator, flatter at poles)
+ * - Dense surface crust + sparse inner volume + thin atmosphere halo
+ * - Equatorial band has more/brighter particles
+ */
+function createParticleSphere(count: number, radius: number, color: number, size = 1.8): THREE.Group {
+  const group = new THREE.Group();
+  const col = new THREE.Color(color);
+
+  // ── Layer 1: Surface crust (80% of particles) — tight shell at surface ──
+  const surfCount = Math.floor(count * 0.80);
+  const surfGeo = new THREE.BufferGeometry();
+  const surfPos  = new Float32Array(surfCount * 3);
+  const surfSc   = new Float32Array(surfCount);
+  const surfPu   = new Float32Array(surfCount);
+
+  for (let i = 0; i < surfCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    // Bias phi toward equator: use power distribution
+    const rawPhi = Math.acos(2 * Math.random() - 1);
+    // Pull particles toward equator (phi = PI/2) by mixing with equatorial value
+    const equatBias = Math.random() < 0.45 ? 0.3 : 1.0; // 45% closer to equator
+    const phi = rawPhi * equatBias + (Math.PI / 2) * (1 - equatBias);
+
+    // Oblate spheroid: compress polar axis (Y in local space → use cos(phi))
+    const flattenY = 0.72; // squash poles
+    const r = radius * (0.93 + Math.random() * 0.10); // thin crust
+    surfPos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    surfPos[i * 3 + 1] = r * Math.cos(phi) * flattenY;
+    surfPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+    // Equatorial band particles slightly larger
+    const eqFactor = 1.0 - Math.abs(Math.cos(phi)) * 0.5;
+    surfSc[i] = (0.5 + Math.random() * 0.8) * eqFactor;
+    surfPu[i] = Math.random() < 0.12 ? Math.random() : 0;
+  }
+  surfGeo.setAttribute("position", new THREE.BufferAttribute(surfPos, 3));
+  surfGeo.setAttribute("aScale",   new THREE.BufferAttribute(surfSc, 1));
+  surfGeo.setAttribute("aPulse",   new THREE.BufferAttribute(surfPu, 1));
+  group.add(new THREE.Points(surfGeo, makeGlowMat(col, size)));
+
+  // ── Layer 2: Atmosphere halo (20% of particles) — larger radius, dimmer ──
+  const atmCount = count - surfCount;
+  const atmGeo = new THREE.BufferGeometry();
+  const atmPos = new Float32Array(atmCount * 3);
+  const atmSc  = new Float32Array(atmCount);
+  const atmPu  = new Float32Array(atmCount);
+
+  for (let i = 0; i < atmCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r = radius * (1.05 + Math.random() * 0.22);
+    atmPos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    atmPos[i * 3 + 1] = r * Math.cos(phi) * 0.75;
+    atmPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    atmSc[i] = 0.25 + Math.random() * 0.45;
+    atmPu[i] = 0;
+  }
+  atmGeo.setAttribute("position", new THREE.BufferAttribute(atmPos, 3));
+  atmGeo.setAttribute("aScale",   new THREE.BufferAttribute(atmSc, 1));
+  atmGeo.setAttribute("aPulse",   new THREE.BufferAttribute(atmPu, 1));
+  const atmMat = makeGlowMat(col, size * 0.7, 0.28);
+  group.add(new THREE.Points(atmGeo, atmMat));
+
+  return group;
+}
+
+/** Flat particle ring around a planet (for visual variety) */
+function createPlanetRing(innerR: number, outerR: number, color: number): THREE.Points {
+  const count = 800;
   const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(count * 3);
+  const pos    = new Float32Array(count * 3);
   const aScale = new Float32Array(count);
   const aPulse = new Float32Array(count);
   for (let i = 0; i < count; i++) {
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
-    const r = radius * (0.82 + Math.random() * 0.36);
-    pos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    pos[i * 3 + 2] = r * Math.cos(phi);
-    aScale[i] = 0.4 + Math.random() * 0.9;
-    aPulse[i] = Math.random() < 0.15 ? Math.random() : 0;
+    const angle = Math.random() * Math.PI * 2;
+    const r = innerR + Math.random() * (outerR - innerR);
+    pos[i * 3]     = r * Math.cos(angle);
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 0.8;
+    pos[i * 3 + 2] = r * Math.sin(angle);
+    aScale[i] = 0.2 + Math.random() * 0.5;
+    aPulse[i] = 0;
   }
   geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute("aScale", new THREE.BufferAttribute(aScale, 1));
-  geo.setAttribute("aPulse", new THREE.BufferAttribute(aPulse, 1));
-  return new THREE.Points(geo, makeGlowMat(new THREE.Color(color), size));
+  geo.setAttribute("aScale",   new THREE.BufferAttribute(aScale, 1));
+  geo.setAttribute("aPulse",   new THREE.BufferAttribute(aPulse, 1));
+  return new THREE.Points(geo, makeGlowMat(new THREE.Color(color), 0.7, 0.45));
 }
 
 function createOrbitRing(radius: number): THREE.Points {
@@ -127,23 +208,35 @@ function createOrbitRing(radius: number): THREE.Points {
 }
 
 function createStars(): THREE.Points {
-  const count = 9000;
+  const count = 12000;
   const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(count * 3);
+  const pos      = new Float32Array(count * 3);
   const aTwinkle = new Float32Array(count);
+  const aFlare   = new Float32Array(count); // 0 = doesn't flare, 1 = flares brightly on scroll
+  const aSize    = new Float32Array(count); // per-star base size for variety
+
   for (let i = 0; i < count; i++) {
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    const r = 350 + Math.random() * 750;
+    // Layered distances: near (crisp) + far (soft)
+    const r = i < count * 0.3
+      ? 250 + Math.random() * 250   // near layer — bigger apparent size
+      : 500 + Math.random() * 700;  // far layer — tiny
     pos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
     pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
     pos[i * 3 + 2] = r * Math.cos(phi);
     aTwinkle[i] = Math.random();
+    // ~35% of stars will flare noticeably on scroll; rest stay subtle
+    aFlare[i]   = Math.random() < 0.35 ? Math.random() : Math.random() * 0.08;
+    // Size variety: most tiny, a few larger "feature" stars
+    aSize[i] = Math.random() < 0.04 ? 3.5 + Math.random() * 1.5 : 1.2 + Math.random() * 1.2;
   }
   geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   geo.setAttribute("aTwinkle", new THREE.BufferAttribute(aTwinkle, 1));
+  geo.setAttribute("aFlare",   new THREE.BufferAttribute(aFlare, 1));
+  geo.setAttribute("aSize",    new THREE.BufferAttribute(aSize, 1));
   return new THREE.Points(geo, new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 } },
+    uniforms: { uTime: { value: 0 }, uWarpIntensity: { value: 0 } },
     vertexShader: STAR_VERT, fragmentShader: STAR_FRAG,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   }));
@@ -227,22 +320,6 @@ function StaticPortfolio() {
   );
 }
 
-/* ── Build per-section camera positions ── */
-function buildCameraPositions(planetMeshes: THREE.Points[]) {
-  const positions: { pos: THREE.Vector3; target: THREE.Vector3 }[] = [];
-  // Hero / overview
-  positions.push({ pos: new THREE.Vector3(0, 120, 420), target: new THREE.Vector3(0, 0, 0) });
-  // Per planet
-  PLANETS.forEach((pd, i) => {
-    const mesh = planetMeshes[i];
-    positions.push({
-      pos: new THREE.Vector3(mesh.position.x * 0.55, mesh.position.y + 20, mesh.position.z + pd.size * 5.5),
-      target: mesh.position.clone(),
-    });
-  });
-  return positions;
-}
-
 /* ── Main component ── */
 export default function SolarSystem() {
   const canvasRef    = useRef<HTMLDivElement>(null);
@@ -276,10 +353,14 @@ export default function SolarSystem() {
     const camTarget = new THREE.Vector3(0, 0, 0);
     const prevCamPos = new THREE.Vector3(0, 120, 420);
 
-    // Sun
-    const sun = createParticleSphere(8000, 22, 0xEF9F27, 2.2);
-    const sunHalo = createParticleSphere(3000, 26, 0xFFC44D, 1.0);
-    (sunHalo.material as THREE.ShaderMaterial).uniforms.uOpacity.value = 0.15;
+    // Sun (Group of two particle layers)
+    const sun = createParticleSphere(9000, 22, 0xEF9F27, 2.4);
+    const sunHalo = createParticleSphere(3500, 26, 0xFFC44D, 1.1);
+    // Dim the halo atmosphere layer
+    sunHalo.children.forEach(c => {
+      const pts = c as THREE.Points;
+      (pts.material as THREE.ShaderMaterial).uniforms.uOpacity.value = 0.13;
+    });
     scene.add(sun); scene.add(sunHalo);
 
     // Stars
@@ -287,15 +368,22 @@ export default function SolarSystem() {
     scene.add(stars);
 
     // Planets & orbits
-    const planetMeshes: THREE.Points[] = [];
+    const planetGroups: THREE.Group[] = [];
     const planetAngles = PLANETS.map(() => Math.random() * Math.PI * 2);
-    PLANETS.forEach((p) => {
+    PLANETS.forEach((p, pi) => {
       scene.add(createOrbitRing(p.radius));
-      const mesh = createParticleSphere(2800, p.size, p.color, 1.8);
-      mesh.position.set(p.radius * Math.cos(planetAngles[PLANETS.indexOf(p)]), 0, p.radius * Math.sin(planetAngles[PLANETS.indexOf(p)]));
-      scene.add(mesh);
-      planetMeshes.push(mesh);
+      const grp = createParticleSphere(3200, p.size, p.color, 2.0);
+      grp.position.set(p.radius * Math.cos(planetAngles[pi]), 0, p.radius * Math.sin(planetAngles[pi]));
+      scene.add(grp);
+      planetGroups.push(grp);
     });
+    // Add rings to two planets for visual variety
+    const ring1 = createPlanetRing(PLANETS[4].size * 1.5, PLANETS[4].size * 2.8, PLANETS[4].color);
+    ring1.rotation.x = Math.PI * 0.25;
+    planetGroups[4].add(ring1);
+    const ring2 = createPlanetRing(PLANETS[5].size * 1.4, PLANETS[5].size * 2.5, PLANETS[5].color);
+    ring2.rotation.x = Math.PI * 0.18;
+    planetGroups[5].add(ring2);
 
     // Warp trail lines
     const WARP_COUNT = 500;
@@ -307,39 +395,46 @@ export default function SolarSystem() {
       warpPosOrig.set(arr);
     }
 
-    // Shooting stars (pool of 6)
+    // Shooting stars (pool of 20 — many visible at once)
+    type ShootData = { active: boolean; t: number; duration: number; from: THREE.Vector3; dir: THREE.Vector3; length: number; speed: number };
     const shootingStars: THREE.Line[] = [];
-    const shootingStarData: { active: boolean; t: number; duration: number; from: THREE.Vector3; dir: THREE.Vector3; length: number }[] = [];
-    for (let i = 0; i < 6; i++) {
+    const shootingStarData: ShootData[] = [];
+    for (let i = 0; i < 20; i++) {
       const s = createShootingStar();
       scene.add(s);
       shootingStars.push(s);
-      shootingStarData.push({ active: false, t: 0, duration: 0, from: new THREE.Vector3(), dir: new THREE.Vector3(), length: 0 });
+      shootingStarData.push({ active: false, t: 0, duration: 0, from: new THREE.Vector3(), dir: new THREE.Vector3(), length: 0, speed: 0 });
     }
 
-    let nextShootTime = 2 + Math.random() * 3;
+    // Stagger initial spawns so we start with several active
+    let nextShootTime = 0.1;
     let timeSinceLastShoot = 0;
 
     function spawnShootingStar() {
       const slot = shootingStarData.findIndex(d => !d.active);
       if (slot === -1) return;
       const d = shootingStarData[slot];
-      d.active = true;
-      d.t = 0;
-      d.duration = 0.5 + Math.random() * 0.7;
-      d.length = 30 + Math.random() * 80;
-      // Random position in sky sphere
+      d.active = true; d.t = 0;
+      d.duration = 0.4 + Math.random() * 0.8;
+      d.length   = 20 + Math.random() * 100;
+      d.speed    = 280 + Math.random() * 280;
+      // Full spherical sky coverage — all directions
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI * 0.5 + Math.PI * 0.1;
-      const r = 300 + Math.random() * 200;
+      const phi   = Math.acos(2 * Math.random() - 1);
+      const r = 280 + Math.random() * 220;
       d.from.set(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
-      // Direction — random cross-sky sweep
-      d.dir.set((Math.random() - 0.5) * 2, -0.3 - Math.random() * 0.4, (Math.random() - 0.5) * 2).normalize();
+      // Direction tangent to sphere — feels like shooting across the sky
+      const up = new THREE.Vector3(0, 1, 0);
+      const radial = d.from.clone().normalize();
+      d.dir.crossVectors(radial, up).normalize();
+      if (Math.random() < 0.5) d.dir.negate();
+      d.dir.add(new THREE.Vector3((Math.random()-0.5)*0.4, (Math.random()-0.5)*0.4, (Math.random()-0.5)*0.4)).normalize();
     }
 
-    // Original planet positions for mouse interaction
-    const planetOrigPos: Float32Array[] = planetMeshes.map(m => {
-      const attr = m.geometry.getAttribute("position") as THREE.BufferAttribute;
+    // Original planet surface positions for mouse scatter (surface layer = child 0)
+    const planetOrigPos: Float32Array[] = planetGroups.map(grp => {
+      const pts = grp.children[0] as THREE.Points;
+      const attr = pts.geometry.getAttribute("position") as THREE.BufferAttribute;
       return new Float32Array(attr.array);
     });
 
@@ -412,23 +507,28 @@ export default function SolarSystem() {
       const dt = clock.getDelta();
       const t = clock.getElapsedTime();
 
-      // Update star shader time
-      (stars.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
+      // Update star shader time (warpIntensity set below after computing it)
+      const starMat = stars.material as THREE.ShaderMaterial;
+      starMat.uniforms.uTime.value = t;
 
-      // Sun pulse
+      // Sun pulse — update all children's time uniform
       const s = 1 + Math.sin(t * 1.4) * 0.035;
       sun.scale.setScalar(s); sunHalo.scale.setScalar(s * 1.05);
       sun.rotation.y += 0.0015; sunHalo.rotation.y -= 0.001;
-      (sun.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
-      (sunHalo.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
+      sun.children.forEach(c => { (( c as THREE.Points).material as THREE.ShaderMaterial).uniforms.uTime.value = t; });
+      sunHalo.children.forEach(c => { ((c as THREE.Points).material as THREE.ShaderMaterial).uniforms.uTime.value = t; });
 
-      // Planets orbit
+      // Planets orbit — groups have position & rotation directly
       PLANETS.forEach((p, i) => {
         planetAngles[i] += p.speed;
-        planetMeshes[i].position.x = p.radius * Math.cos(planetAngles[i]);
-        planetMeshes[i].position.z = p.radius * Math.sin(planetAngles[i]);
-        planetMeshes[i].rotation.y += 0.002;
-        (planetMeshes[i].material as THREE.ShaderMaterial).uniforms.uTime.value = t;
+        planetGroups[i].position.x = p.radius * Math.cos(planetAngles[i]);
+        planetGroups[i].position.z = p.radius * Math.sin(planetAngles[i]);
+        planetGroups[i].rotation.y += 0.0018;
+        // Update time uniform on all child Points
+        planetGroups[i].children.forEach(c => {
+          const mat = (c as THREE.Points).material as THREE.ShaderMaterial;
+          if (mat.uniforms?.uTime) mat.uniforms.uTime.value = t;
+        });
       });
 
       // ── Scroll-driven camera interpolation ──
@@ -466,10 +566,12 @@ export default function SolarSystem() {
       camera.lookAt(camTarget);
 
       // ── Warp trail effect ──
-      // Warp intensity: peaks in mid-scroll (frac 0.2–0.8), zero at section boundaries
       const warpIntensity = fromIdx !== toIdx
-        ? Math.sin(Math.PI * frac) * 1.0  // bell curve, 0 at edges, 1 at midpoint
+        ? Math.sin(Math.PI * frac) * 1.0
         : 0;
+
+      // Feed warp intensity to star shader so stars flare during travel
+      starMat.uniforms.uWarpIntensity.value += (warpIntensity - starMat.uniforms.uWarpIntensity.value) * 0.06;
 
       // Camera velocity vector (world space, per-frame delta)
       const camVelocity = camPos.clone().sub(prevCamPos);
@@ -511,26 +613,23 @@ export default function SolarSystem() {
       if (timeSinceLastShoot >= nextShootTime) {
         spawnShootingStar();
         timeSinceLastShoot = 0;
-        nextShootTime = 2 + Math.random() * 5;
+        // Frequent spawns — ~1–3 active at any moment
+        nextShootTime = 0.4 + Math.random() * 1.2;
       }
 
       shootingStarData.forEach((d, i) => {
         if (!d.active) return;
         d.t += dt;
         const prog = Math.min(d.t / d.duration, 1);
-        const fade = Math.sin(Math.PI * prog); // 0→1→0
+        const fade = Math.sin(Math.PI * prog);
         const mat = shootingStars[i].material as THREE.LineBasicMaterial;
-        mat.opacity = fade * 0.95;
-
-        // Move tail tip forward
-        const speed = 400;
-        const head = d.from.clone().addScaledVector(d.dir, prog * speed);
+        mat.opacity = fade * 0.9;
+        const head = d.from.clone().addScaledVector(d.dir, prog * d.speed);
         const tail = head.clone().addScaledVector(d.dir, -d.length * fade);
         const posArr = (shootingStars[i].geometry.getAttribute("position") as THREE.BufferAttribute).array as Float32Array;
         tail.toArray(posArr, 0);
         head.toArray(posArr, 3);
         (shootingStars[i].geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
-
         if (prog >= 1) { d.active = false; mat.opacity = 0; }
       });
 
@@ -565,25 +664,26 @@ export default function SolarSystem() {
         cursorRingRef.current.style.transform = isOverPlanet ? "translate(-50%,-50%) scale(2.5)" : "translate(-50%,-50%) scale(1)";
       }
 
-      // ── Planet hover raycasting ──
+      // ── Planet hover raycasting (using group world positions) ──
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, camera);
       let found = -1, minDist = Infinity;
-      planetMeshes.forEach((mesh, i) => {
-        const dist = raycaster.ray.distanceToPoint(mesh.position);
-        if (dist < PLANETS[i].size * 1.8 && dist < minDist) { minDist = dist; found = i; }
+      planetGroups.forEach((grp, i) => {
+        const dist = raycaster.ray.distanceToPoint(grp.position);
+        if (dist < PLANETS[i].size * 1.85 && dist < minDist) { minDist = dist; found = i; }
       });
       if (found !== hoveredPlanet) {
         if (hoveredPlanet >= 0) {
-          const mat = planetMeshes[hoveredPlanet].material as THREE.ShaderMaterial;
-          gsap.to(mat.uniforms.uSize, { value: 1.8, duration: 0.3 });
-          gsap.to(mat.uniforms.uOpacity, { value: 0.95, duration: 0.3 });
+          // Reset surface layer material
+          const surfMat = (planetGroups[hoveredPlanet].children[0] as THREE.Points).material as THREE.ShaderMaterial;
+          gsap.to(surfMat.uniforms.uSize, { value: 2.0, duration: 0.3 });
+          gsap.to(surfMat.uniforms.uOpacity, { value: 0.95, duration: 0.3 });
         }
         hoveredPlanet = found; isOverPlanet = found >= 0;
         if (found >= 0) {
-          const mat = planetMeshes[found].material as THREE.ShaderMaterial;
-          gsap.to(mat.uniforms.uSize, { value: 3.2, duration: 0.3 });
-          gsap.to(mat.uniforms.uOpacity, { value: 1.0, duration: 0.3 });
+          const surfMat = (planetGroups[found].children[0] as THREE.Points).material as THREE.ShaderMaterial;
+          gsap.to(surfMat.uniforms.uSize, { value: 3.4, duration: 0.3 });
+          gsap.to(surfMat.uniforms.uOpacity, { value: 1.0, duration: 0.3 });
           if (tooltipRef.current) { tooltipRef.current.textContent = PLANETS[found].name; tooltipRef.current.style.opacity = "1"; }
         } else {
           if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
@@ -594,22 +694,23 @@ export default function SolarSystem() {
         tooltipRef.current.style.top  = (cursorTargetY - 12) + "px";
       }
 
-      // ── Mouse-proximity particle scatter ──
+      // ── Mouse-proximity particle scatter on surface layer ──
       if (hoveredPlanet >= 0) {
-        const mesh = planetMeshes[hoveredPlanet];
+        const grp = planetGroups[hoveredPlanet];
+        const surfPts = grp.children[0] as THREE.Points;
         const origPos = planetOrigPos[hoveredPlanet];
-        const posAttr = mesh.geometry.getAttribute("position") as THREE.BufferAttribute;
+        const posAttr = surfPts.geometry.getAttribute("position") as THREE.BufferAttribute;
         const arr = posAttr.array as Float32Array;
         const ray = new THREE.Raycaster(); ray.setFromCamera(mouse, camera);
         const planeNorm = new THREE.Vector3(0, 1, 0);
-        const p2c = camera.position.clone().sub(mesh.position);
-        const d = planeNorm.dot(p2c);
+        const p2c = camera.position.clone().sub(grp.position);
+        const nd = planeNorm.dot(p2c);
         const nDotRay = planeNorm.dot(ray.ray.direction);
         const mw = new THREE.Vector3();
-        if (Math.abs(nDotRay) > 0.0001) { const tRay = -d / nDotRay; ray.ray.at(Math.max(0, tRay), mw); }
+        if (Math.abs(nDotRay) > 0.0001) { const tRay = -nd / nDotRay; ray.ray.at(Math.max(0, tRay), mw); }
         const pr = PLANETS[hoveredPlanet].size * 3.5;
         for (let i = 0; i < arr.length; i += 3) {
-          const wx = mesh.position.x + arr[i], wy = mesh.position.y + arr[i+1], wz = mesh.position.z + arr[i+2];
+          const wx = grp.position.x + arr[i], wy = grp.position.y + arr[i+1], wz = grp.position.z + arr[i+2];
           const dx = wx - mw.x, dy = wy - mw.y, dz = wz - mw.z;
           const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
           if (dist < pr && dist > 0.01) {
