@@ -368,7 +368,7 @@ export default function SolarSystem() {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    const isMobile = window.innerWidth < 768;
+    const isMobile = window.innerWidth < 768 || window.matchMedia("(pointer: coarse)").matches;
     const touchDevice = isTouchDevice();
     document.body.style.cursor = touchDevice ? "auto" : "none";
     const orbitScale = isMobile ? 0.6 : 1.0;
@@ -436,6 +436,48 @@ export default function SolarSystem() {
     const ring2 = createPlanetRing(scenePlanets[5].size * 1.4, scenePlanets[5].size * 2.5, scenePlanets[5].color, ringParticleCount);
     ring2.rotation.x = Math.PI * 0.18;
     planetGroups[5].add(ring2);
+
+    const EXPANDED_SCALE = 3.7;
+    const NORMAL_SCALE = 1;
+    let expandedPlanetIndex = -1;
+
+    const setActivePlanet = (sectionIndex: number) => {
+      if (!isMobile) return;
+
+      const planetIndex = sectionIndex - 1;
+
+      if (expandedPlanetIndex >= 0 && expandedPlanetIndex !== planetIndex) {
+        gsap.to(planetGroups[expandedPlanetIndex].scale, {
+          x: NORMAL_SCALE,
+          y: NORMAL_SCALE,
+          z: NORMAL_SCALE,
+          duration: 0.9,
+          ease: "power2.inOut",
+        });
+      }
+
+      if (planetIndex >= 0) {
+        gsap.to(planetGroups[planetIndex].scale, {
+          x: EXPANDED_SCALE,
+          y: EXPANDED_SCALE,
+          z: EXPANDED_SCALE,
+          duration: 1.2,
+          ease: "power2.inOut",
+        });
+        expandedPlanetIndex = planetIndex;
+      } else {
+        if (expandedPlanetIndex >= 0) {
+          gsap.to(planetGroups[expandedPlanetIndex].scale, {
+            x: NORMAL_SCALE,
+            y: NORMAL_SCALE,
+            z: NORMAL_SCALE,
+            duration: 0.9,
+            ease: "power2.inOut",
+          });
+        }
+        expandedPlanetIndex = -1;
+      }
+    };
 
     // Warp trail lines
     const WARP_COUNT = 500;
@@ -598,6 +640,7 @@ export default function SolarSystem() {
 
       const currentSection = Math.round(scrollY / window.innerHeight);
       const nextSection = Math.max(0, Math.min(totalSections - 1, currentSection + (delta > 0 ? 1 : -1)));
+      setActivePlanet(nextSection);
       gsap.to(window, {
         scrollTo: nextSection * window.innerHeight,
         duration: 1.2,
@@ -815,6 +858,7 @@ export default function SolarSystem() {
       if (displaySection !== currentDisplaySection) {
         currentDisplaySection = displaySection;
         setActiveNavIndex(displaySection);
+        setActivePlanet(displaySection);
       }
       updateOverlay(displaySection, frac > 0.55 || (frac <= 0.55 && displaySection > 0 && frac === 0));
       // Simpler: show overlay when settled at a planet section
@@ -897,6 +941,10 @@ export default function SolarSystem() {
     };
 
     animate();
+
+    if (isMobile) {
+      setActivePlanet(0);
+    }
 
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
