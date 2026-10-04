@@ -54,14 +54,18 @@ export function ProjectDetailProvider({ children, onDeepLink }: ProviderProps) {
     setHash(null);
     const trigger = triggerRef.current;
     triggerRef.current = null;
-    if (trigger?.isConnected) requestAnimationFrame(() => trigger.focus({ preventScroll: true }));
+    if (trigger?.isConnected) trigger.focus({ preventScroll: true });
   }, []);
 
   // Deep links: on load and when the hash is edited by hand.
   useEffect(() => {
     const handle = () => {
       const slug = slugFromHash();
-      if (!slug) return;
+      if (!slug) {
+        // Hash changed to something that isn't a project: close any open panel.
+        setActiveSlug(null);
+        return;
+      }
       deepLinkRef.current?.(slug);
       triggerRef.current = null;
       setActiveSlug(slug);

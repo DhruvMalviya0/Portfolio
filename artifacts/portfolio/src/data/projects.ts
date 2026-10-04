@@ -270,7 +270,7 @@ export const PROJECTS: Project[] = [
     category: "AI / ML",
     status: "Prototype",
     period: "Apr 2026",
-    role: "Solo",
+    // TODO(dhruv): add your role and team size for the hackathon
     problem:
       "Health-insurance choices in India hinge on jargon like waiting periods and co-pays. AarogyaAid explains which policy fits a person's health and budget, citing the policy text instead of the model's guesses.",
     highlights: [

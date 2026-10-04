@@ -1,4 +1,4 @@
-import { type Project, awardOf, isTodo } from "@/data/projects";
+import { type Project, isTodo } from "@/data/projects";
 import { ExternalIcon, GitHubIcon, PlayIcon } from "@/components/icons";
 import { AwardBadge, HackathonPill, RichText, StatusPill, accentVars } from "./ProjectBits";
 
@@ -11,7 +11,8 @@ interface Props {
 
 /** Shared detail layout used by the side panel and the featured planets. */
 export function ProjectDetailBody({ project: p, titleId, eyebrow }: Props) {
-  const award = awardOf(p);
+  // Cards fall back to the hackathon result; here it already has its own row.
+  const award = p.award;
   const meta = [p.period, p.role].filter(Boolean).join(" · ");
   const h = p.hackathon;
   const hackRows: [string, string | number | undefined][] = h

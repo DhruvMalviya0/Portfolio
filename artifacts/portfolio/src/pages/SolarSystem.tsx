@@ -291,6 +291,8 @@ function easeInOut(t: number): number {
 /* ── Static fallback ── */
 function StaticPortfolio() {
   const onDeepLink = useCallback(() => {
+    // The 3D view may have started a scroll tween before WebGL failed; stop it.
+    gsap.killTweensOf(window);
     document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
   }, []);
   return (

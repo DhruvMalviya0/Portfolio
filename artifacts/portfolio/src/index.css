@@ -529,6 +529,15 @@ canvas {
   transition: opacity 0.5s ease;
 }
 
+/* The overlay is transparent over the planet; a soft shadow keeps body text legible. */
+.section-overlay .pd-problem,
+.section-overlay .pd-tagline,
+.section-overlay .pd-highlights li,
+.section-overlay .section-inner > p,
+.section-overlay .section-inner > ul > li {
+  text-shadow: 0 1px 3px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.85);
+}
+
 .section-overlay--projects {
   width: min(900px, 92vw);
 }
@@ -707,7 +716,7 @@ canvas {
   text-align: left;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 38%, rgba(255,255,255,0.12));
-  background: rgba(8, 8, 20, 0.55);
+  background: rgba(8, 8, 20, 0.82);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: inherit;
