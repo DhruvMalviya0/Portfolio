@@ -17,11 +17,16 @@ https://dhruvmalviya.vercel.app/
 - **GSAP ScrollTrigger** — camera travels a bezier spline path around the solar system driven by scroll progress
 - **Custom GLSL shaders** — per-particle color, circular point rendering with soft edge falloff, distance-scaled point size
 - **Interactive raycasting** — hover planets to glow and reveal labels, click to snap to that section
-- **Right-side nav** — 8 dots + up/down animated chevron arrows for direct section jumping
+- **Right-side nav** — 9 dots (hero + 8 planets) + up/down animated chevron arrows for direct section jumping
 - **Scroll arrow** — animated bounce chevron at hero bottom fades out as you start scrolling
 - **Custom cursor** — 12px glowing dot with lerp smoothing and particle trail
 - **Star parallax** — background stars drift subtly on mouse move
-- **Bug-free nav** — raycasting is fully blocked when interacting with nav UI so planets behind dots never accidentally trigger
+- **Bug-free nav** — raycasting is fully blocked when interacting with nav UI, section cards or the project panel, so planets behind them never accidentally trigger
+- **Project hub** — the Projects planet opens a filterable card grid (All · Hackathons · AI / ML · Full-Stack · Graphics · Tools · Computer Vision · Mobile); scrolling inside the grid never skips a section
+- **Project detail panel** — frosted side panel on desktop / bottom sheet on mobile, focus-trapped, closes with ✕, Esc or the backdrop, and lazy-loaded
+- **Deep links** — `#project/<slug>` scrolls to Projects and opens that project (e.g. `#project/morphos-media`)
+- **Featured planets** — MorphOS Media Studio and the Solar System Ray Tracer get their own planets with the full detail layout inline
+- **One source of truth** — every project lives in `src/data/projects.ts`; the 3D overlay and the no-WebGL fallback render the same React section components
 
 ---
 
@@ -30,13 +35,16 @@ https://dhruvmalviya.vercel.app/
 | Planet | Section | Color | Orbit Radius |
 |--------|---------|-------|-------------|
 | ☀️ Sun | Hero — Dhruv Malviya | `#EF9F27` | 0 |
-| Mercury | About | `#888780` | 64 |
-| Venus | Skills | `#EF9F27` | 104 |
-| Earth | Experience | `#1D9E75` | 148 |
-| Mars | Arcane Project | `#D85A30` | 192 |
-| Saturn | Ray Tracer | `#7F77DD` | 238 |
-| Jupiter | Achievements | `#BA7517` | 280 |
-| Neptune | Contact | `#378ADD` | 318 |
+| Mercury | About | `#888780` | 60 |
+| Venus | Skills | `#EF9F27` | 96 |
+| Earth | Experience | `#1D9E75` | 134 |
+| Mars | Projects (hub) | `#D85A30` | 176 |
+| Jupiter | Featured · MorphOS Media Studio | `#B46CF0` | 218 |
+| Saturn 💍 | Featured · Solar System Ray Tracer | `#7F77DD` | 258 |
+| Uranus 💍 | Achievements | `#BA7517` | 298 |
+| Neptune | Contact | `#378ADD` | 336 |
+
+Orbits and planet sizes are scaled by 0.6 / 0.7 on mobile. The planet list lives in `src/data/planets.ts`.
 
 ---
 
@@ -93,27 +101,29 @@ Name, subtitle, GitHub · LinkedIn · Discord links. Animated particle sun coron
 CS undergrad at Kalvium / MIT ADT University (2024–2028), B.Tech CSE. Specializing in full-stack development and scalable architectures.
 
 ### 🟡 Skills — Venus
-Animated pill tags:
-- **Languages:** JavaScript, C++, Python, SQL, GLSL
-- **Frontend:** React.js, Tailwind CSS
-- **Backend:** Node.js, Express.js
-- **Databases:** MongoDB, MySQL
-- **Tools:** Git, GitHub, Docker, Postman, Linux (Arch, Fedora)
+Pill tags:
+- **Languages:** JavaScript, TypeScript, C++, Python, SQL, GLSL
+- **Frontend:** React.js, Next.js, Tailwind CSS, Three.js / R3F, GSAP
+- **Backend:** Node.js, Express.js, FastAPI
+- **Databases:** MongoDB, MySQL, Firebase
+- **AI & Vision:** LLM APIs / RAG, OpenCV / MediaPipe
+- **Desktop & Mobile:** Tauri, Flutter
+- **Tools:** Git, GitHub, Docker, Postman, Playwright, Linux
 
 ### 🌍 Experience — Earth
 **Kalvium Work Integration** · Full-Stack Developer · Jan 2026–Present
 Built core features for the Ledger app using MERN stack. Merged code into the Kalvium community repo as part of the S72 Catalyst program.
 
-### 🔴 Arcane — Mars
-**Property Search Portal** · Aug–Oct 2025
-Led a 4-person team. React + Node.js + MongoDB. Mock government database integration (DORIS/CERSAI). Color-coded verification algorithm.
-🏆 **3rd place out of 50+ teams at a national 24-hour hackathon.**
+### 🔴 Projects — Mars
+The project hub: filter chips, a card grid (status, hackathon pill, award, top stack tags) and a detail panel per project. See [Projects](#-projects) below.
 
-### 🪐 Ray Tracer — Saturn
-**Solar System Ray Tracer** · Jun 2025–Present
-Custom C++ rendering engine with OpenGL, GLM, and GLSL shaders. Decoupled threading model, BVH collision optimization, dynamic Phong shading.
+### 🟣 Featured · MorphOS — Jupiter
+Local-first AI media suite (Tauri + React shell, FastAPI backend, photo / audio / manga engines, hardware gatekeeper).
 
-### 🟠 Achievements — Jupiter
+### 🪐 Featured · Ray Tracer — Saturn
+Real-time solar system in C++17 / OpenGL with Keplerian orbits, GLM hierarchical transforms and custom GLSL lighting.
+
+### 🟠 Achievements — Uranus
 - 🥉 3rd Place · National 24-Hour Hackathon (50+ teams)
 - 🤖 Core Dev · SIH 2025 — AI rockfall prediction model in Python
 - 🚀 IIT Bombay E-Summit · Startup MVP showcase
@@ -122,6 +132,32 @@ Custom C++ rendering engine with OpenGL, GLM, and GLSL shaders. Decoupled thread
 ### 🔵 Contact — Neptune
 GitHub · LinkedIn · Discord DM
 > *Open to internships — Let's build something.*
+
+---
+
+## 📂 Projects
+
+All project content lives in [`artifacts/portfolio/src/data/projects.ts`](artifacts/portfolio/src/data/projects.ts).
+
+| Project | Category | Repo |
+|---------|----------|------|
+| MorphOS Media Studio ★ | AI / ML | [MorphOS-Media](https://github.com/DhruvMalviya0/MorphOS-Media) |
+| Neel Watch ★ (SIH26143) | AI / ML | — |
+| Project Butterfly ★ | Full-Stack | [Butterfly](https://github.com/DhruvMalviya0/Butterfly) |
+| Interactive AI Desktop Assistant ★ | AI / ML | [Desktop-AI-Assistant](https://github.com/DhruvMalviya0/Desktop-AI-Assistant) |
+| Pivot ★ | Tools | [Pivot](https://github.com/DhruvMalviya0/Pivot) |
+| Solar System Ray Tracer ★ | Graphics | [Solar-System](https://github.com/DhruvMalviya0/Solar-System) |
+| Arcane ★ (🏆 3rd of 50+) | Full-Stack | [Arcane](https://github.com/DhruvMalviya0/Arcane) · [live](https://arcane1.netlify.app/) |
+| D&G Production | Full-Stack | [DG-Production](https://github.com/DhruvMalviya0/DG-Production) |
+| AarogyaAid | AI / ML | [AarogyaAid](https://github.com/DhruvMalviya0/AarogyaAid) |
+| AI Rockfall Prediction (SIH25071) | AI / ML | [AI-Based-Rockfall-Prediction-and-Alert-System](https://github.com/DhruvMalviya0/AI-Based-Rockfall-Prediction-and-Alert-System) |
+| Omertà: Multiplayer Mafia | Full-Stack | [Mafia-game](https://github.com/DhruvMalviya0/Mafia-game) · [live](https://mafia-game-chi.vercel.app) |
+| Customer Support Triage (OpenEnv) | AI / ML | [openenv-customer-support](https://github.com/DhruvMalviya0/openenv-customer-support) |
+| Stickr | Mobile | [Stickr](https://github.com/DhruvMalviya0/Stickr) |
+| Gesture Control Suite | Computer Vision | [Virtual-Mouse](https://github.com/DhruvMalviya0/Virtual-Mouse) · [Hill-Climb-racing-using-hand-gestures](https://github.com/DhruvMalviya0/Hill-Climb-racing-using-hand-gestures) |
+| Time Series Demand Forecasting | AI / ML | [time-series-demand-forecast](https://github.com/DhruvMalviya0/time-series-demand-forecast) |
+
+★ = featured (shown first in the hub).
 
 ---
 
@@ -142,7 +178,7 @@ GitHub · LinkedIn · Discord DM
 ## 🐛 Known Fixes Applied
 
 - **Nav click-through bug** — raycasting blocked via `isOverNavUI` flag + bounding box guard when pointer is over nav dots or arrows
-- **Arrow boundary states** — up arrow hidden on section 0, down arrow hidden on section 7
+- **Arrow boundary states** — up arrow hidden on section 0, down arrow hidden on section 8
 - **Scroll arrow** — fades out over first 5% of scroll progress via GSAP scrub
 
 ---
